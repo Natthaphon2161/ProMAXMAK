@@ -1,0 +1,75 @@
+<div class="dashboard-container">
+  <h1>Service Types</h1>
+
+  <div class="navigation-button">
+    <button class="btn" (click)="openAddEditModal()">Add Service Type</button>
+  </div>
+
+  <div class="service-type-list">
+    <h3>Available Service Types</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Size</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let serviceType of serviceTypes">
+          <td>{{ serviceType.name }}</td>
+          <td>{{ serviceType.price | currency:'THB' }}</td>
+          <td>{{ serviceType.size }}</td>
+          <td>
+            <button class="btn" (click)="openAddEditModal(serviceType)">Edit</button>
+            <button class="btn" style="background-color: #dc2626;" (click)="confirmDelete(serviceType.serviceid)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal" *ngIf="isModalOpen">
+    <div class="modal-content">
+      <span class="close" (click)="closeModal()">&times;</span>
+      <h2>{{ isEditMode ? 'Edit' : 'Add' }} Service Type</h2>
+      <form [formGroup]="serviceTypeForm" (ngSubmit)="onSubmit()">
+        <label for="name">Name:</label>
+        <input id="name" formControlName="name" type="text" placeholder="Enter service name">
+        <div class="error-message" *ngIf="nameControl?.touched && nameControl?.errors?.['required']">
+          Name is required.
+        </div>
+        <div class="error-message" *ngIf="nameControl?.touched && nameControl?.errors?.['minlength']">
+          Name must be at least 2 characters long.
+        </div>
+
+        <label for="price">Price:</label>
+        <input id="price" formControlName="price" type="number" placeholder="Enter price">
+        <div class="error-message" *ngIf="priceControl?.touched && priceControl?.errors?.['required']">
+          Price is required.
+        </div>
+        <div class="error-message" *ngIf="priceControl?.touched && priceControl?.errors?.['min']">
+          Price cannot be negative.
+        </div>
+
+        <label for="size">Size:</label>
+        <select id="size" formControlName="size">
+          <option value="" disabled>Select size</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+        </select>
+        <div class="error-message" *ngIf="sizeControl?.touched && sizeControl?.errors?.['required']">
+          Size is required.
+        </div>
+
+        <div class="navigation-button">
+          <button type="submit" class="btn">{{ isEditMode ? 'Update' : 'Create' }}</button>
+          <button type="button" class="btn" style="background-color: #6b7280;" (click)="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

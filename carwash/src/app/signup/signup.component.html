@@ -1,0 +1,77 @@
+<form (ngSubmit)="onSubmit(signupForm)" #signupForm="ngForm" novalidate>
+  <h2>Signup</h2>
+  
+  <div>
+    <label for="firstname">First Name:</label>
+    <input type="text" id="firstname" name="firstname" [(ngModel)]="model.firstname" required #firstname="ngModel">
+    <div *ngIf="firstname.invalid && (firstname.dirty || firstname.touched)">
+      <small *ngIf="firstname.errors?.['required']">First Name is required.</small>
+    </div>
+  </div>
+  
+  <div>
+    <label for="lastname">Last Name:</label>
+    <input type="text" id="lastname" name="lastname" [(ngModel)]="model.lastname" required #lastname="ngModel">
+    <div *ngIf="lastname.invalid && (lastname.dirty || lastname.touched)">
+      <small *ngIf="lastname.errors?.['required']">Last Name is required.</small>
+    </div>
+  </div>
+  
+  <div>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" [(ngModel)]="model.username" required #username="ngModel">
+    <div *ngIf="username.invalid && (username.dirty || username.touched)">
+      <small *ngIf="username.errors?.['required']">Username is required.</small>
+    </div>
+  </div>
+  
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" [(ngModel)]="model.password" required minlength="6" #password="ngModel">
+    <div *ngIf="password.invalid && (password.dirty || password.touched)">
+      <small *ngIf="password.errors?.['required']">Password is required.</small>
+      <small *ngIf="password.errors?.['minlength']">Password must be at least 6 characters long.</small>
+    </div>
+  </div>
+  
+  <div>
+    <label for="confirmpassword">Confirm Password:</label>
+    <input type="password" id="confirmpassword" name="confirmpassword" [(ngModel)]="model.confirmpassword" required minlength="6" #confirmpassword="ngModel">
+    <div *ngIf="confirmpassword.invalid && (confirmpassword.dirty || confirmpassword.touched)">
+      <small *ngIf="confirmpassword.errors?.['required']">Confirm Password is required.</small>
+      <small *ngIf="confirmpassword.errors?.['minlength']">Confirm Password must be at least 6 characters long.</small>
+    </div>
+    <div *ngIf="model.password && model.confirmpassword && model.password !== model.confirmpassword">
+      <small>Passwords must match.</small>
+    </div>
+  </div>
+  
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" [(ngModel)]="model.email" required email #email="ngModel">
+    <div *ngIf="email.invalid && (email.dirty || email.touched)">
+      <small *ngIf="email.errors?.['required']">Email is required.</small>
+      <small *ngIf="email.errors?.['email']">Invalid email format.</small>
+    </div>
+  </div>
+
+  <div>
+    <label for="phonenumber">Phone Number:</label>
+    <input 
+      type="text" 
+      id="phonenumber" 
+      name="phonenumber" 
+      [(ngModel)]="model.phonenumber" 
+      required 
+      pattern="^[0-9]{10}$" 
+      minlength="10" 
+      maxlength="10" 
+      #phonenumber="ngModel">
+    <div *ngIf="phonenumber.invalid && (phonenumber.dirty || phonenumber.touched)">
+      <small *ngIf="phonenumber.errors?.['required']">Phone Number is required.</small>
+      <small *ngIf="phonenumber.errors?.['pattern']">Phone Number must be exactly 10 digits long.</small>
+    </div>
+  </div>
+
+  <button type="submit" [disabled]="!signupForm.form.valid">Sign Up</button>
+</form>

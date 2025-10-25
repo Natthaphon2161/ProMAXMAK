@@ -1,0 +1,87 @@
+body {
+    background-color: #f0f2f5;
+    font-family: 'Arial', sans-serif;
+}
+
+.container {
+    max-width: 600px;
+    margin: 40px auto;
+    margin-top: 150px;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.profile-title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-weight: bold;
+    color: #555;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 12px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: #0eb11b;
+    box-shadow: 0 0 5px #0c7e16;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #0eb11b;
+    border: none;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #7D7D7D;
+    border: none;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0c7e16;
+}
+
+.btn-secondary:hover {
+    background-color: #6B6B6B;
+}
+
+p {
+    margin: 12px 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #888;
+}

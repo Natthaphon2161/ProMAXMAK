@@ -1,0 +1,114 @@
+.navbar .getstarted {
+  background: #106eea;
+  margin-left: 30px;
+  border-radius: 4px;
+  font-weight: 400;
+  color: #cccccc;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  line-height: 2.3;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease; 
+}
+
+.navbar .getstarted:hover {
+  background: #ffc107;
+  color: #ffffff; 
+  transform: scale(1.05); 
+}
+
+.navbar .signup-button,
+.navbar .login-button {
+  margin-left: 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.navbar .signup-button {
+  background: #28a745;
+}
+
+.navbar .signup-button:hover {
+  background: #218838;
+  transform: scale(1.05);
+}
+
+.navbar .login-button {
+  background: #007bff;
+}
+
+.navbar .login-button:hover {
+  background: #0056b3;
+}
+
+.navbar-nav a {
+  font-size: 15px;
+  text-transform: uppercase;
+  font-weight: 500;
+  transition: color 0.3s ease, text-shadow 0.3s ease; 
+}
+
+.navbar-nav .nav-link {
+  position: relative; 
+}
+
+.navbar-nav .nav-link:hover {
+  color: #ffc107;
+  text-shadow: 0 0 5px rgba(255, 193, 7, 0.5); 
+}
+
+.navbar-light .navbar-brand {
+  color: #000;
+  font-size: 25px;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 2px;
+  transition: color 0.3s ease; 
+}
+
+.navbar-light .navbar-brand:hover,
+.navbar-light .navbar-brand:focus {
+  color: #ffc107; 
+}
+
+.navbar-light .navbar-nav .nav-link {
+  color: #000;
+}
+
+.navbar-light .navbar-nav .nav-link:focus,
+.navbar-light .navbar-nav .nav-link:hover {
+  color: #ffc107; 
+  border-bottom: 2px solid #ffc107; 
+}
+
+.w-100 {
+  height: 100vh;
+}
+
+.navbar-toggler {
+  padding: 1px 5px;
+  font-size: 18px;
+  line-height: 0.3;
+  background: #fff;
+}
+
+.navbar-light .navbar-nav .nav-item .dropdown-toggle {
+  color: #000; 
+}
+
+.navbar-light .dropdown-menu {
+  background-color: #fff; 
+}
+
+.navbar-light .dropdown-menu .dropdown-item {
+  color: #000; 
+  transition: background 0.3s ease, color 0.3s ease; 
+}
+
+.navbar-light .dropdown-menu .dropdown-item:hover, 
+.navbar-light .dropdown-menu .dropdown-item:focus {
+  background-color: #f8f9fa; 
+  color: #ffc107; 
+}

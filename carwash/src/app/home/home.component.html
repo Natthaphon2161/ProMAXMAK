@@ -1,0 +1,53 @@
+<div class="container-fluid mt-4 p-4 bg-light rounded shadow-sm">
+  <div class="halloween-section">
+    <div class="pumpkin-group">
+      <div class="pumpkin pumpkin-1"></div>
+      <div class="pumpkin pumpkin-2"></div>
+      <div class="pumpkin pumpkin-3"></div>
+    </div>
+    <h1 class="halloween-title">
+      <span class="emoji">🎃</span> สุขสันต์วันฮาโลวีน! <span class="emoji">🎃</span>
+    </h1>
+    <p class="halloween-desc">
+      ลด 20% ทุกบริการล้างรถ ตลอดเดือนตุลาคม! <br>
+      <strong>โปรโมชั่นพิเศษ: ฟรีเคลือบแว็กซ์ + ตรวจเช็คฟรี</strong> <br>
+      รับสิทธิ์ทันทีที่สาขาใกล้บ้านคุณ!
+    </p>
+    <button class="btn btn-warning btn-lg halloween-btn" (click)="scrollToBooking()">
+      เรียนรู้เพิ่มเติม
+    </button>
+  </div>
+</div>
+
+<!-- Chat Bot Floating Button -->
+<button class="chat-bot-btn" (click)="toggleChatModal()">
+  <i class="bi bi-chat-dots-fill"></i>
+  <span class="chat-badge">ใหม่!</span>
+</button>
+
+<!-- Chat Bot Modal -->
+<div class="modal fade" [class.show]="showChatModal" id="chatModal" tabindex="-1" [style.display]="showChatModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">แชทกับ Shine & Drive Bot</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeChatModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="chat-container" id="chatContainer">
+          <div *ngFor="let message of chatMessages" class="chat-message" [ngClass]="message.type">
+            <small class="text-muted">{{ message.timestamp | date:'HH:mm' }}</small><br>
+            <strong>{{ message.type === 'bot' ? 'Shine Bot:' : 'คุณ:' }}</strong> {{ message.text }}
+          </div>
+          <div *ngIf="isTyping" class="chat-message bot typing-indicator">
+            <strong>Shine Bot:</strong> กำลังพิมพ์...
+          </div>
+        </div>
+        <div class="input-group mt-2">
+          <input type="text" class="form-control" id="chatInput" [(ngModel)]="chatInput" placeholder="พิมพ์ข้อความของคุณ..." (keyup.enter)="sendMessage()" />
+          <button class="btn btn-primary" [disabled]="isTyping" (click)="sendMessage()">ส่ง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
