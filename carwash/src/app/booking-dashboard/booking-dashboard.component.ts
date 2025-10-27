@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
-import { Chart, ChartConfiguration, ChartData } from 'chart.js';
+import Chart, { ChartConfiguration, ChartData } from 'chart.js/auto';
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID, Inject } from '@angular/core';
 
@@ -24,6 +24,10 @@ interface Booking {
   styleUrls: ['./booking-dashboard.component.css']
 })
 export class BookingDashboardComponent implements OnInit, AfterViewInit {
+
+  currentPage = 1;
+  itemsPerPage = 10; 
+
   bookings: Booking[] = [];
   filteredBookings: Booking[] = [];
   dailySummary: { date: string; totalBookings: number; totalRevenue: number }[] = [];
@@ -283,12 +287,13 @@ export class BookingDashboardComponent implements OnInit, AfterViewInit {
       case 'rejected':
         return 'bg-danger text-white'; // แดง
       default:
-        console.warn('Unknown status detected:', normalizedStatus); // Debug warn
+        console.warn('Unknown status detected:', normalizedStatus); // Debug warn3
         return 'bg-secondary text-white'; // สีเทา ถ้าไม่รู้จัก
     }
   }
 
   createChart(): void {
+    
     if (isPlatformBrowser(this.platformId)) {
       const ctx = document.getElementById('bookingChart') as HTMLCanvasElement | null;
       if (ctx) {

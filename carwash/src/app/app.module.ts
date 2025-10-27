@@ -17,7 +17,7 @@ import { BookingStatusComponent } from './booking-status/booking-status.componen
 import { ServiceTypeComponent } from './service-type/service-type.component';
 import { ServiceComponent } from './service/service.component';
 import { CarsizeComponent } from './carsize/carsize.component';
-
+import { NgxPaginationModule } from 'ngx-pagination';
 // Register Thai locale
 registerLocaleData(localeTh, 'th');
 
@@ -40,7 +40,9 @@ registerLocaleData(localeTh, 'th');
     CommonModule,
     AppRoutingModule,
     FormsModule,
+    NgxPaginationModule,
     ReactiveFormsModule,
+    
   ],
   providers: [
     provideHttpClient(withInterceptorsFromDi()),

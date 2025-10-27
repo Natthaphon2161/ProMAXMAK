@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 
 const config = {
     user: 'sa',
-    password: '123456789',
+    password: '1234',
     server: '127.0.0.1',
     database: 'ShineandDrive',
     synchronize: true,
@@ -265,43 +265,87 @@ app.get('/api/servicetypes', async (req, res) => {
   });
 
   app.post('/api/bookings', async (req, res) => {
-    try {
-      const { firstname, lastname, phonenumber, services, datetime, licenseplate, size, userId, totalPrice } = req.body; // Include totalPrice
-  
-      const pool = await sql.connect(config);
-      const userValidation = await pool.request()
-        .input('userId', sql.Int, userId)
-        .query('SELECT * FROM User_Account WHERE userId = @userId');
-  
-      if (userValidation.recordset.length === 0) {
-        return res.status(400).send({ message: 'Invalid user ID. Please check and try again.' });
-      }
-      const localDateTime = new Date(datetime);
-      const utcDateTime = new Date(localDateTime.getTime() + (7 * 60 * 60 * 1000)).toISOString(); // Adjust for UTC+7
-      const serviceNames = services ? services.map(service => service.name).join(', ') : '';
-  
-      await pool.request()
-        .input('firstname', sql.NVarChar(100), firstname || null)
-        .input('lastname', sql.NVarChar(100), lastname || null)
-        .input('phonenumber', sql.NVarChar(10), phonenumber || null)
-        .input('servicetype', sql.NVarChar(255), serviceNames)
-        .input('datetime', sql.DateTime, utcDateTime)
-        .input('licenseplate', sql.NVarChar(20), licenseplate || null)
-        .input('size', sql.NVarChar(50), size || null)
-        .input('userId', sql.Int, userId)
-        .input('totalPrice', sql.Decimal, totalPrice) // Add totalPrice here
-        .input('status', sql.NVarChar(50), 'pending')
-        .query(`
-            INSERT INTO bookings (firstname, lastname, phonenumber, servicetype, datetime, licenseplate, size, userId, totalPrice, status) 
-            VALUES (@firstname, @lastname, @phonenumber, @servicetype, @datetime, @licenseplate, @size, @userId, @totalPrice, @status)
-        `);
-  
-      res.status(200).send({ message: 'Booking successful' });
-    } catch (err) {
-      console.error('Database insert error:', err);
-      res.status(500).send({ message: 'Booking failed. Please try again later.' });
-    }
-  });
+        try {
+            const { firstname, lastname, phonenumber, services, datetime, licenseplate, size, userId, totalPrice } = req.body; // Include totalPrice
+
+            const pool = await sql.connect(config);
+
+            // 1) ตรวจสอบ userId เดิม
+            const userValidation = await pool.request()
+            .input('userId', sql.Int, userId)
+            .query('SELECT * FROM User_Account WHERE userId = @userId');
+
+            if (userValidation.recordset.length === 0) {
+            return res.status(400).send({ message: 'Invalid user ID. Please check and try again.' });
+            }
+
+            // 2) คำนวณรอบชั่วโมง: นาที > 31 ปัดขึ้น, นาที ≤ 31 ปัดลง (ยึดตามเวลาที่ client ส่งมาเป็น local)
+            const localDateTime = new Date(datetime);
+            const minutes = localDateTime.getMinutes();
+
+            let slotStartLocal = new Date(localDateTime);
+            if (minutes > 31) {
+            // ปัดขึ้นชั่วโมงถัดไป
+            slotStartLocal.setHours(slotStartLocal.getHours() + 1, 0, 0, 0);
+            } else {
+            // ปัดลงต้นชั่วโมง
+            slotStartLocal.setMinutes(0, 0, 0);
+            }
+            const slotEndLocal = new Date(slotStartLocal.getTime() + 60 * 60 * 1000); // +1 ชม.
+
+            // 3) แปลงเป็น UTC ตามแนวทางเดิม (บวก 7 ชั่วโมง)
+            const slotStartUtc = new Date(slotStartLocal.getTime() + (7 * 60 * 60 * 1000)).toISOString();
+            const slotEndUtc   = new Date(slotEndLocal.getTime()   + (7 * 60 * 60 * 1000)).toISOString();
+
+            // 4) เช็คการจองทับในช่วง [slotStartUtc, slotEndUtc)
+            //    นับเฉพาะสถานะที่ถือว่าคิวถูกใช้ (pending, in-progress, complete) — ตัด rejected ออก
+            const conflict = await pool.request()
+            .input('slotStart', sql.DateTime, slotStartUtc)
+            .input('slotEnd',   sql.DateTime, slotEndUtc)
+            .query(`
+                SELECT COUNT(*) AS cnt
+                FROM bookings
+                WHERE datetime >= @slotStart
+                AND datetime <  @slotEnd
+                AND status IN ('pending','in-progress','complete')
+            `);
+
+            if (conflict.recordset[0].cnt > 0) {
+            return res.status(409).send({
+                message: 'This time slot is already booked. Please choose another time (slots are every 1 hour).'
+            });
+            }
+
+            // 5) รวมชื่อบริการเป็นสตริง (ของเดิม)
+            const serviceNames = services ? services.map(service => service.name).join(', ') : '';
+
+            // 6) เวลาเพื่อบันทึก (ใช้ต้นชั่วโมงที่คำนวณแล้ว) → แปลง UTC ตามแนวทางเดิม
+            const utcDateTime = slotStartUtc;
+
+            // 7) INSERT (ของเดิม)
+            await pool.request()
+            .input('firstname',   sql.NVarChar(100), firstname || null)
+            .input('lastname',    sql.NVarChar(100), lastname || null)
+            .input('phonenumber', sql.NVarChar(10),  phonenumber || null)
+            .input('servicetype', sql.NVarChar(255), serviceNames)
+            .input('datetime',    sql.DateTime,      utcDateTime)
+            .input('licenseplate',sql.NVarChar(20),  licenseplate || null)
+            .input('size',        sql.NVarChar(50),  size || null)
+            .input('userId',      sql.Int,           userId)
+            .input('totalPrice',  sql.Decimal,       totalPrice) // Add totalPrice here (ชนิดเดิม)
+            .input('status',      sql.NVarChar(50),  'pending')
+            .query(`
+                INSERT INTO bookings (firstname, lastname, phonenumber, servicetype, datetime, licenseplate, size, userId, totalPrice, status) 
+                VALUES (@firstname, @lastname, @phonenumber, @servicetype, @datetime, @licenseplate, @size, @userId, @totalPrice, @status)
+            `);
+
+            return res.status(200).send({ message: 'Booking successful' });
+        } catch (err) {
+            console.error('Database insert error:', err);
+            return res.status(500).send({ message: 'Booking failed. Please try again later.' });
+        }
+        });
+
   
 
   app.get('/api/bookings/report', async (req, res) => {

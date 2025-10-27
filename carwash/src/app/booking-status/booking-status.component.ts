@@ -8,6 +8,10 @@ import { AuthService } from '../auth.service'; // Adjust path as necessary
   styleUrls: ['./booking-status.component.css'],
 })
 export class BookingStatusComponent implements OnInit {
+
+  currentPage = 1;
+  itemsPerPage = 10; 
+
   bookings: any[] = [];
   userId: number; // Ensure userId is of type number
   private baseUrl = 'http://localhost:3000/bookings/user'; // Base URL without :userId
@@ -35,14 +39,29 @@ export class BookingStatusComponent implements OnInit {
     return date.toLocaleString('en-GB', options); 
   }
   
+  // loadBookings(): void {
+  //   this.http.get(`${this.baseUrl}/${this.userId}`).subscribe(
+  //     (data: any) => {
+  //       this.bookings = data;
+  //     },
+  //     (error) => {
+  //       console.error('Error fetching bookings:', error);
+  //     }
+  //   );
+  // }
   loadBookings(): void {
-    this.http.get(`${this.baseUrl}/${this.userId}`).subscribe(
-      (data: any) => {
-        this.bookings = data;
-      },
-      (error) => {
-        console.error('Error fetching bookings:', error);
-      }
-    );
-  }
+  this.http.get(`${this.baseUrl}/${this.userId}`).subscribe(
+    (data: any) => {
+      // แปลงข้อมูลให้เป็น array แล้วจัดเรียงจาก bookingId มาก → น้อย
+      this.bookings = (Array.isArray(data) ? data : [])
+        .sort((a, b) => b.bookingId - a.bookingId);
+
+      console.log('Sorted bookings:', this.bookings); // debug ดูได้
+    },
+    (error) => {
+      console.error('Error fetching bookings:', error);
+    }
+  );
+}
+
 }
