@@ -2,31 +2,41 @@
   <h1>Service Types</h1>
 
   <div class="navigation-button">
-    <button class="btn" (click)="openAddEditModal()">Add Service Type</button>
+    <button class="btn bg-gradient-info" (click)="openAddEditModal()">Add Service Type</button>
   </div>
-
+  
   <div class="service-type-list">
     <h3>Available Service Types</h3>
+    <div class="d-flex justify-content-end align-items-center mb-2">
+    <label class="me-2 small text-secondary">Rows per page:</label>
+    <select class="form-select form-select-sm w-auto" [(ngModel)]="itemsPerPage">
+      <option [ngValue]="5">5</option>
+      <option [ngValue]="10">10</option>
+      <option [ngValue]="20">20</option>
+    </select>
+  </div>
     <table>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Price</th>
-          <th>Size</th>
+          <th (click)="sortTable('name')"> Name<i [ngClass]="getSortIcon('name')"></i></th>
+          <th (click)="sortTable('price')"> Price<i [ngClass]="getSortIcon('price')"></i></th>
+          <th (click)="sortTable('size')"> Size<i [ngClass]="getSortIcon('size')"></i></th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let serviceType of serviceTypes">
+          <tr *ngFor="let serviceType of filteredServiceTypes
+               | paginate: { itemsPerPage: itemsPerPage, currentPage: currentPage }">
           <td>{{ serviceType.name }}</td>
           <td>{{ serviceType.price | currency:'THB' }}</td>
           <td>{{ serviceType.size }}</td>
           <td>
-            <button class="btn" (click)="openAddEditModal(serviceType)">Edit</button>
-            <button class="btn" style="background-color: #dc2626;" (click)="confirmDelete(serviceType.serviceid)">Delete</button>
+          <button class="btn bg-gradient-info" (click)="openAddEditModal(serviceType)">Edit</button>
+          <button class="btn bg-gradient-warning" style="margin-left: 1rem;" (click)="confirmDelete(serviceType.serviceid)">Delete</button>
           </td>
         </tr>
       </tbody>
+
     </table>
   </div>
 
@@ -71,5 +81,11 @@
         </div>
       </form>
     </div>
+  </div>
+  <div class="d-flex justify-content-center mt-3">
+    <pagination-controls (pageChange)="currentPage = $event"
+                         previousLabel="Prev"
+                         nextLabel="Next">
+    </pagination-controls>
   </div>
 </div>

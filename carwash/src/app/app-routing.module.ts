@@ -21,6 +21,7 @@ const routes: Routes = [
   { path: 'service', component: ServiceComponent },
   { path: 'carsize', component: CarsizeComponent },
   { path: 'test', component: SelectDateTimeComponent },
+  { path: 'service-types', component: ServiceTypeComponent },
   { 
     path: 'service-type', 
     component: ServiceTypeComponent, 

@@ -1,19 +1,23 @@
 <div class="service-container">
-    <h1>All Services</h1>
-    <div class="search-container">
-        <input type="text" id="search" [(ngModel)]="searchQuery" (input)="searchServices()" placeholder="ค้นหาบริการ...">
-    </div>
+  <h1>All Services</h1>
 
+  <div class="search-container">
+    <input type="text" id="search" [(ngModel)]="searchQuery" (input)="searchServices()" placeholder="ค้นหาบริการ...">
+  </div>
+
+  <!-- ✅ ใช้ container grid -->
+  <div class="service-grid">
     <div *ngFor="let service of filteredServices" class="service-item">
-        <img [src]="service.image" alt="{{ service.name }}" class="service-image">
-        <h2>{{ service.name }}</h2>
-        <p>{{ service.description }}</p>
-        <p>ราคา:</p>
-        <ul>
-            <li *ngFor="let size of (service.prices | keyvalue)">
-                {{ size.key }}: {{ size.value }} บาท
-            </li>
-        </ul>
-        <button (click)="bookService(service)">จองบริการ</button> 
+      <img [src]="service.image" alt="{{ service.name }}" class="service-image">
+      <h2>{{ service.name }}</h2>
+      <p>{{ service.description }}</p>
+      <p>ราคา:</p>
+      <ul>
+        <li *ngFor="let size of (service.prices | keyvalue)">
+          {{ size.key }}: {{ size.value }} บาท
+        </li>
+      </ul>
+      <button (click)="bookService(service)">จองบริการ</button>
     </div>
+  </div>
 </div>

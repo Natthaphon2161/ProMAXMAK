@@ -16,6 +16,7 @@ interface Booking {
   status: string;
   totalPrice: number;
   formattedDateTime?: string;
+  licenseplate: string;
 }
 
 @Component({
@@ -52,7 +53,10 @@ export class BookingDashboardComponent implements OnInit, AfterViewInit {
   selectedDailySummary: any;
   selectedMonthlySummary: any;
   selectedYearlySummary: any;
-  private bookingChart: Chart | undefined;
+  private bookingChart: Chart<'doughnut'> | null = null;
+  private chartdaily: Chart | null = null;
+  private chartmonthly: Chart | null = null;
+  private chartyearly: Chart | null = null;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -79,6 +83,9 @@ export class BookingDashboardComponent implements OnInit, AfterViewInit {
         this.generateMonthlySummary();
         this.generateYearlySummary();
         this.createChart();
+        this.renderDailySummaryChart();
+        this.renderMonthlySummaryChart();
+        this.renderYearlySummaryChart();
       },
       (error) => this.handleError('Failed to load bookings', error),
       () => this.isLoading = false
@@ -94,18 +101,24 @@ export class BookingDashboardComponent implements OnInit, AfterViewInit {
 
   generateDailySummary(): void {
     const summaryMap: { [key: string]: { totalBookings: number; totalRevenue: number } } = {};
+
     this.bookings.forEach(booking => {
       if (booking.status !== 'rejected') {
         const date = this.formatDateTime(booking.datetime).split(',')[0];
         const totalPrice = booking.totalPrice || 0;
+
         if (!summaryMap[date]) {
           summaryMap[date] = { totalBookings: 0, totalRevenue: 0 };
         }
+
         summaryMap[date].totalBookings += 1;
         summaryMap[date].totalRevenue += totalPrice;
       }
     });
-    this.dailySummary = Object.entries(summaryMap).map(([date, { totalBookings, totalRevenue }]) => ({ date, totalBookings, totalRevenue }));
+
+    this.dailySummary = Object.entries(summaryMap)
+      .map(([date, { totalBookings, totalRevenue }]) => ({ date, totalBookings, totalRevenue }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // เรียงวัน
   }
 
   generateMonthlySummary(): void {
@@ -122,7 +135,13 @@ export class BookingDashboardComponent implements OnInit, AfterViewInit {
         summaryMap[month].totalRevenue += totalPrice;
       }
     });
-    this.monthlySummary = Object.entries(summaryMap).map(([month, { totalBookings, totalRevenue }]) => ({ month, totalBookings, totalRevenue }));
+    this.monthlySummary = Object.entries(summaryMap)
+    .map(([month, { totalBookings, totalRevenue }]) => ({ month, totalBookings, totalRevenue }))
+    .sort((a, b) => {
+      const [yearA, monthA] = a.month.split('-').map(Number);
+      const [yearB, monthB] = b.month.split('-').map(Number);
+      return yearA === yearB ? monthA - monthB : yearA - yearB;
+    });
   }
 
   generateYearlySummary(): void {
@@ -293,48 +312,333 @@ export class BookingDashboardComponent implements OnInit, AfterViewInit {
   }
 
   createChart(): void {
-    
-    if (isPlatformBrowser(this.platformId)) {
-      const ctx = document.getElementById('bookingChart') as HTMLCanvasElement | null;
-      if (ctx) {
-        if (this.bookingChart) {
-          this.bookingChart.destroy();
-        }
-        const chartData: ChartData<'doughnut'> = {
-          labels: ['Pending', 'In Progress', 'Completed', 'Rejected'],
-          datasets: [{
-            data: [this.pendingBookings, this.inProgressBookings, this.completedBookings, this.rejectedBookings],
-            backgroundColor: [
-              'rgba(255, 206, 86, 0.8)',   // Yellow for Pending
-              'rgba(54, 162, 235, 0.8)',   // Blue for In Progress
-              'rgba(75, 192, 192, 0.8)',   // Teal for Completed
-              'rgba(255, 99, 132, 0.8)'    // Red for Rejected
-            ],
-            borderColor: [
-              'rgba(255, 206, 86, 1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(75, 192, 192, 1)',
-              'rgba(255, 99, 132, 1)'
-            ],
-            borderWidth: 1
-          }]
-        };
+  if (!isPlatformBrowser(this.platformId)) return;
 
-        const chartConfig: ChartConfiguration = {
-          type: 'doughnut' as const,
-          data: chartData,
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: 'Booking Status Distribution' }
-            }
-          }
-        };
+  const canvas = document.getElementById('bookingChart') as HTMLCanvasElement | null;
+  if (!canvas) return;
 
-        this.bookingChart = new Chart(ctx, chartConfig);
-      }
-    }
+  // เคลียร์กราฟเดิม
+  if (this.bookingChart) {
+    this.bookingChart.destroy();
   }
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // ไล่เฉดสีให้ดูมีมิติเหมือน 3D
+  const gradY = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradY.addColorStop(0, 'rgba(255, 206, 86, 1)');
+  gradY.addColorStop(1, 'rgba(200, 160, 40, 1)');
+
+  const gradB = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradB.addColorStop(0, 'rgba(54, 162, 235, 1)');
+  gradB.addColorStop(1, 'rgba(30, 110, 180, 1)');
+
+  const gradTeal = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradTeal.addColorStop(0, 'rgba(75, 192, 192, 1)');
+  gradTeal.addColorStop(1, 'rgba(40, 140, 140, 1)');
+
+  const gradR = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradR.addColorStop(0, 'rgba(255, 99, 132, 1)');
+  gradR.addColorStop(1, 'rgba(200, 50, 90, 1)');
+
+  // เงาให้ชิ้นกราฟดูนูน (type แคสต์ any กัน type error)
+  const shadowPlugin: any = {
+    id: 'sliceShadow',
+    beforeDatasetDraw: (chart: any) => {
+      const { ctx } = chart;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 10;
+    },
+    afterDatasetDraw: (chart: any) => {
+      chart.ctx.restore();
+    }
+  };
+
+  const chartData: ChartData<'doughnut', number[], string> = {
+    labels: ['Pending', 'In Progress', 'Completed', 'Rejected'],
+    datasets: [{
+      data: [
+        this.pendingBookings,
+        this.inProgressBookings,
+        this.completedBookings,
+        this.rejectedBookings
+      ],
+      backgroundColor: [gradY, gradB, gradTeal, gradR],
+      borderColor: 'rgba(255,255,255,0.9)',
+      borderWidth: 2,
+      hoverOffset: 10,
+      spacing: 2
+      // ❌ ห้ามใส่ cutout ตรงนี้
+    }]
+  };
+
+  const chartConfig: ChartConfiguration<'doughnut'> = {
+    type: 'doughnut',
+    data: chartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      // ✅ ใส่ cutout ที่ options ของ doughnut
+      cutout: '35%',
+      plugins: {
+        legend: { position: 'top' },
+        title: { display: true, text: 'Booking Status Distribution' }
+      },
+      // ลด option animation ให้เรียบๆ กัน type mismatch
+      animation: {
+        duration: 900
+      }
+    },
+    plugins: [shadowPlugin]
+  };
+
+  // แนะนำให้ประกาศตัวแปรเป็น Chart<'doughnut'> เพื่อให้ type ตรง
+  this.bookingChart = new Chart(canvas, chartConfig);
+}
+
+
+  renderDailySummaryChart(): void {
+  if (this.chartdaily) {
+    this.chartdaily.destroy();
+  }
+
+  // 🔹 เอาเฉพาะ 5 วันล่าสุด
+  const recentData = this.dailySummary
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-5);
+
+  const labels = recentData.map(s => s.date);
+  const bookingsData = recentData.map(s => s.totalBookings);
+  const revenueData = recentData.map(s => s.totalRevenue);
+
+  const data: ChartConfiguration<'line'>['data'] = {
+    labels,
+    datasets: [
+      {
+        label: 'Total Bookings',
+        data: bookingsData,
+        borderColor: '#007bff',
+        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: 'Total Revenue (THB)',
+        data: revenueData,
+        borderColor: '#28a745',
+        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y1', // ใช้แกน y ขวา
+      },
+    ],
+  };
+
+  const config: ChartConfiguration<'line'> = {
+    type: 'line',
+    data,
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Last 5 Days — Bookings & Revenue',
+          font: { size: 16 },
+        },
+        tooltip: { enabled: true },
+        legend: { position: 'top' },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Bookings' },
+        },
+        y1: {
+          beginAtZero: true,
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Revenue (THB)' },
+        },
+      },
+    },
+  };
+
+  this.chartdaily = new Chart('dailySummaryChart', config);
+}
+
+
+  renderMonthlySummaryChart(): void {
+    if (this.chartmonthly) {
+      this.chartmonthly.destroy();
+    }
+
+    const labels = this.monthlySummary.map(s => {
+    const [y, m] = s.month.split('-').map(Number);
+    return new Date(y, m - 1).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    });
+    const bookingsData = this.monthlySummary.map(s => s.totalBookings);
+    const revenueData = this.monthlySummary.map(s => s.totalRevenue);
+
+    const data: ChartConfiguration<'line'>['data'] = {
+      labels,
+      datasets: [
+        {
+          label: 'Total Bookings',
+          data: bookingsData,
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.2)',
+          fill: true,
+          tension: 0.3,
+        },
+        {
+          label: 'Total Revenue (THB)',
+          data: revenueData,
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40, 167, 69, 0.2)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1', // ใช้แกน y ขวา
+        },
+      ],
+    };
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data,
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Monthly Bookings',
+            font: { size: 16 },
+          },
+          tooltip: { enabled: true },
+          legend: { position: 'top' },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Bookings' },
+          },
+          y1: {
+            beginAtZero: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Revenue (THB)' },
+          },
+        },
+      },
+    };
+
+    this.chartmonthly = new Chart('monthlySummaryChart', config);
+  }
+
+  renderYearlySummaryChart(): void {
+    if (this.chartyearly) {
+      this.chartyearly.destroy();
+    }
+
+    const labels = this.yearlySummary.map(s => s.year);
+    const bookingsData = this.yearlySummary.map(s => s.totalBookings);
+    const revenueData = this.yearlySummary.map(s => s.totalRevenue);
+
+    const data: ChartConfiguration<'line'>['data'] = {
+      labels,
+      datasets: [
+        {
+          label: 'Total Bookings',
+          data: bookingsData,
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.2)',
+          fill: true,
+          tension: 0.3,
+        },
+        {
+          label: 'Total Revenue (THB)',
+          data: revenueData,
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40, 167, 69, 0.2)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1', // ใช้แกน y ขวา
+        },
+      ],
+    };
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data,
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Yearly Bookings & Revenue',
+            font: { size: 16 },
+          },
+          tooltip: { enabled: true },
+          legend: { position: 'top' },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Bookings' },
+          },
+          y1: {
+            beginAtZero: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Revenue (THB)' },
+          },
+        },
+      },
+    };
+
+    this.chartyearly = new Chart('YearlySummaryChart', config);
+  }
+  sortColumn: string = '';
+sortDirection: 'asc' | 'desc' = 'asc';
+
+sortTable(column: string): void {
+  // ถ้าคลิกคอลัมน์เดิม → สลับทิศทาง asc/desc
+  if (this.sortColumn === column) {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    this.sortColumn = column;
+    this.sortDirection = 'asc';
+  }
+
+  // จัดเรียง
+  this.filteredBookings.sort((a: any, b: any) => {
+    let valueA = a[column];
+    let valueB = b[column];
+
+    // แปลงวันที่ให้เทียบได้ถูก
+    if (column === 'formattedDateTime') {
+      valueA = new Date(valueA);
+      valueB = new Date(valueB);
+    }
+
+    // แปลง string → lowercase เพื่อเทียบไม่สนตัวพิมพ์
+    if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+    if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+
+    if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
+    if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+// แสดง icon ▲▼ ในหัวตาราง
+getSortIcon(column: string): string {
+  if (this.sortColumn !== column) return '';
+  return this.sortDirection === 'asc' ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill';
+}
 }

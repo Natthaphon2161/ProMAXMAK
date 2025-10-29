@@ -1,3 +1,15 @@
+.bg-gradient-info {
+  background: linear-gradient(135deg, #4798df 0%, #2f4bec 100%);
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-warning {
+  background: linear-gradient(135deg, #fa7070 0%, #e05555 100%);
+}
+
 .dashboard-container {
   max-width: 1200px;
   margin: 2rem auto;

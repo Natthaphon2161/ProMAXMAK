@@ -16,6 +16,13 @@ interface ServiceType {
   styleUrls: ['./service-type.component.css']
 })
 export class ServiceTypeComponent implements OnInit {
+
+  currentPage = 1;
+  itemsPerPage = 10; 
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  filteredServiceTypes: any[] = [];
   serviceTypes: ServiceType[] = [];
   serviceTypeForm: FormGroup;
   isModalOpen = false;
@@ -37,12 +44,14 @@ export class ServiceTypeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadServiceTypes();
+    
   }
 
   loadServiceTypes(): void {
     this.http.get<ServiceType[]>('http://localhost:3000/api/servicetypes').subscribe({
       next: (data) => {
         this.serviceTypes = data;
+        this.filteredServiceTypes = [...this.serviceTypes];
       },
       error: () => {
         Swal.fire('Error!', 'Failed to load service types.', 'error');
@@ -125,4 +134,40 @@ export class ServiceTypeComponent implements OnInit {
       }
     });
   }
+
+
+getSortIcon(column: string): string {
+  if (this.sortColumn !== column) return '';
+  return this.sortDirection === 'asc' ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill';
+}
+
+sortTable(column: 'name' | 'price' | 'size'): void {
+  if (this.sortColumn === column) {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    this.sortColumn = column;
+    this.sortDirection = 'asc';
+  }
+
+  this.filteredServiceTypes.sort((a: any, b: any) => {
+    let va = a[column];
+    let vb = b[column];
+
+    // จัดการชนิดข้อมูล: price เป็นตัวเลข, name/size เป็นตัวอักษร
+    if (column === 'price') {
+      va = Number(va);
+      vb = Number(vb);
+    } else {
+      va = String(va ?? '').toLowerCase();
+      vb = String(vb ?? '').toLowerCase();
+    }
+
+    if (va < vb) return this.sortDirection === 'asc' ? -1 : 1;
+    if (va > vb) return this.sortDirection === 'asc' ?  1 : -1;
+    return 0;
+  });
+
+  // รีเซ็ตหน้า
+  this.currentPage = 1;
+}
 }
