@@ -11,6 +11,7 @@ import { ServiceTypeComponent } from './service-type/service-type.component';
 import { ServiceComponent } from './service/service.component';
 import { CarsizeComponent } from './carsize/carsize.component';
 import { AuthGuard } from './auth.guard';
+import { SelectDateTimeComponent } from './select-date-time/select-date-time.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -19,6 +20,7 @@ const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'service', component: ServiceComponent },
   { path: 'carsize', component: CarsizeComponent },
+  { path: 'test', component: SelectDateTimeComponent },
   { 
     path: 'service-type', 
     component: ServiceTypeComponent, 

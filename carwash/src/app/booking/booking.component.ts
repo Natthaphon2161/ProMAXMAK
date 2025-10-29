@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { NgForm } from '@angular/forms';
 
+
+
 @Component({
   selector: 'app-booking',
   templateUrl: './booking.component.html',
@@ -184,4 +186,26 @@ export class BookingComponent implements OnInit {
       }
     });
   }
+
+  onDateTimePicked(e: { date: string; time: string }) {
+    // e.date: 'YYYY-MM-DD', e.time: 'HH:mm'
+    // รวมเป็นค่า datetime-local ที่ input รองรับ
+    this.datetime = `${e.date}T${e.time}`;
+
+    // อัปเดต minDateTime เผื่อผู้ใช้เปิดฟอร์มไว้นาน
+    this.minDateTime = this.computeMinDateTime();
+  }
+
+  /** คำนวณ min เดี๋ยวนี้ในรูปแบบที่ <input type="datetime-local"> ต้องการ */
+  private computeMinDateTime(): string {
+    const now = new Date();
+    // แปลงเป็น 'YYYY-MM-DDTHH:mm' (ตัดวินาที/โซน)
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mi = String(now.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+
 }

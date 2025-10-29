@@ -264,6 +264,47 @@ app.get('/api/servicetypes', async (req, res) => {
     }
   });
 
+    app.get('/api/availability', async (req, res) => {
+    try {
+        const { date } = req.query; // เช่น '2025-04-14'
+        if (!date) return res.status(400).send({ message: 'Missing date parameter' });
+
+        const pool = await sql.connect(config);
+
+        // กำหนดขอบเขตวัน (local) แล้วชิฟต์เป็น UTC ตามวิธีที่คุณใช้อยู่ (บวก 7 ชม.)
+        const startOfDay = new Date(date);                 // 2025-04-14T00:00 (local)
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);         // 2025-04-15T00:00 (local)
+
+        const startUtc = new Date(startOfDay.getTime() + 7 * 60 * 60 * 1000).toISOString();
+        const endUtc   = new Date(endOfDay.getTime()   + 7 * 60 * 60 * 1000).toISOString();
+
+        // ดึง "slot เริ่มต้น" ของการจอง (ซึ่งคุณบันทึกเป็นต้นชั่วโมงอยู่แล้ว)
+        // แปลงกลับเป็นเวลาท้องถิ่น แล้วฟอร์แมตให้เป็น 'YYYY-MM-DDTHH:mm'
+        const result = await pool.request()
+        .input('start', sql.DateTime, startUtc)
+        .input('end',   sql.DateTime, endUtc)
+        .query(`
+            SELECT FORMAT(DATEADD(HOUR, -7, datetime), 'yyyy-MM-ddTHH:mm') AS slotLocal
+            FROM bookings
+            WHERE datetime >= @start
+            AND datetime <  @end
+            AND status IN ('pending','in-progress','complete')
+            GROUP BY FORMAT(DATEADD(HOUR, -7, datetime), 'yyyy-MM-ddTHH:mm')
+            ORDER BY MIN(datetime)
+        `);
+
+        // คืนเฉพาะรายการวัน–เวลาที่ถูกจอง (local)
+        const bookedDateTimes = result.recordset.map(r => r.slotLocal);
+        return res.json({ bookedDateTimes });
+    } catch (err) {
+        console.error('Error checking availability:', err);
+        return res.status(500).send({ message: 'Server error checking availability' });
+    }
+    });
+
+
+
   app.post('/api/bookings', async (req, res) => {
         try {
             const { firstname, lastname, phonenumber, services, datetime, licenseplate, size, userId, totalPrice } = req.body; // Include totalPrice

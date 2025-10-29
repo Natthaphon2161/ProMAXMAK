@@ -18,6 +18,7 @@ import { ServiceTypeComponent } from './service-type/service-type.component';
 import { ServiceComponent } from './service/service.component';
 import { CarsizeComponent } from './carsize/carsize.component';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { SelectDateTimeComponent } from './select-date-time/select-date-time.component';
 // Register Thai locale
 registerLocaleData(localeTh, 'th');
 
@@ -34,6 +35,7 @@ registerLocaleData(localeTh, 'th');
     ServiceTypeComponent,
     ServiceComponent,
     CarsizeComponent,
+    SelectDateTimeComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'serverApp' }),
